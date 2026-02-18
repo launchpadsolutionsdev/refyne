@@ -1,6 +1,8 @@
 const Anthropic = require('@anthropic-ai/sdk');
 
-const client = new Anthropic();
+const client = new Anthropic({
+  timeout: 60_000, // 60 s per request (SDK default is 10 min)
+});
 
 const CATEGORIES = [
   'Email Campaign',
@@ -91,6 +93,12 @@ async function processDocument(rawText, filename) {
     } catch (err) {
       lastError = err;
       console.error(`Process attempt ${attempt + 1} failed for "${filename}":`, err.message);
+
+      // Don't retry auth errors or bad requests — they will never succeed
+      const status = err.status || err.statusCode;
+      if (status === 401 || status === 403 || status === 400) {
+        break;
+      }
 
       if (attempt < MAX_RETRIES) {
         const delay = RETRY_DELAYS[attempt];

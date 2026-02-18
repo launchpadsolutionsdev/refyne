@@ -85,54 +85,62 @@ router.get('/:projectId/chunks/categories', async (req, res, next) => {
 async function processDocumentsQueue(projectId, documents) {
   const state = processingState.get(projectId);
 
-  for (const doc of documents) {
-    try {
-      state.currentDocument = doc.original_filename;
+  try {
+    for (const doc of documents) {
+      try {
+        state.currentDocument = doc.original_filename;
 
-      // Mark document as processing
-      await Document.updateStatus(doc.id, 'processing');
+        // Mark document as processing
+        await Document.updateStatus(doc.id, 'processing');
 
-      // Send to Claude API
-      const result = await processDocument(doc.raw_text, doc.original_filename);
+        // Send to Claude API
+        const result = await processDocument(doc.raw_text, doc.original_filename);
 
-      // Store chunks and tags
-      for (let i = 0; i < result.chunks.length; i++) {
-        const chunkData = result.chunks[i];
-        const tokenCount = estimateTokens(chunkData.content);
+        // Store chunks and tags
+        for (let i = 0; i < result.chunks.length; i++) {
+          const chunkData = result.chunks[i];
+          const tokenCount = estimateTokens(chunkData.content);
 
-        const chunk = await Chunk.create({
-          documentId: doc.id,
-          projectId,
-          title: chunkData.title,
-          content: chunkData.content,
-          summary: chunkData.summary,
-          category: chunkData.category || result.document_type,
-          tokenCount,
-          sortOrder: i,
-        });
+          const chunk = await Chunk.create({
+            documentId: doc.id,
+            projectId,
+            title: chunkData.title,
+            content: chunkData.content,
+            summary: chunkData.summary,
+            category: chunkData.category || result.document_type,
+            tokenCount,
+            sortOrder: i,
+          });
 
-        // Create and link tags
-        if (chunkData.tags && chunkData.tags.length > 0) {
-          for (const tagName of chunkData.tags) {
-            const tag = await Tag.findOrCreate(projectId, tagName.toLowerCase().trim());
-            await Tag.linkToChunk(chunk.id, tag.id);
+          // Create and link tags
+          if (chunkData.tags && chunkData.tags.length > 0) {
+            for (const tagName of chunkData.tags) {
+              const tag = await Tag.findOrCreate(projectId, tagName.toLowerCase().trim());
+              await Tag.linkToChunk(chunk.id, tag.id);
+            }
           }
         }
-      }
 
-      // Mark document as processed
-      await Document.updateStatus(doc.id, 'processed');
-      state.completed++;
-    } catch (err) {
-      console.error(`Processing failed for ${doc.original_filename}:`, err.message);
-      state.errors.push({
-        documentId: doc.id,
-        filename: doc.original_filename,
-        error: err.message,
-      });
-      await Document.updateStatus(doc.id, 'error', { errorMessage: err.message });
-      state.completed++;
+        // Mark document as processed
+        await Document.updateStatus(doc.id, 'processed');
+        state.completed++;
+      } catch (err) {
+        console.error(`Processing failed for ${doc.original_filename}:`, err.message);
+        state.errors.push({
+          documentId: doc.id,
+          filename: doc.original_filename,
+          error: err.message,
+        });
+        try {
+          await Document.updateStatus(doc.id, 'error', { errorMessage: err.message });
+        } catch { /* ignore status update failure */ }
+        state.completed++;
+      }
     }
+  } catch (err) {
+    // Catch-all: if something truly unexpected happens, mark as done with error
+    console.error('Processing queue crashed:', err.message);
+    state.errors.push({ documentId: null, filename: null, error: err.message });
   }
 
   state.status = 'done';
