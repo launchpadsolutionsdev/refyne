@@ -7,6 +7,8 @@ const errorHandler = require('./middleware/errorHandler');
 const projectRoutes = require('./routes/projects');
 const documentRoutes = require('./routes/documents');
 
+const initDatabase = require('./config/init-db');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -27,6 +29,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// JSON 404 for unmatched API routes
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'Not found' });
+});
+
 // Serve React build in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
@@ -38,8 +45,16 @@ if (process.env.NODE_ENV === 'production') {
 // Error handling
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Refyne server running on port ${PORT}`);
-});
+// Initialize database then start server
+initDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Refyne server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to initialize database:', err);
+    process.exit(1);
+  });
 
 module.exports = app;
