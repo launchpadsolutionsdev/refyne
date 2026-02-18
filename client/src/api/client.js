@@ -71,3 +71,25 @@ export function getDocument(id) {
 export function deleteDocument(id) {
   return request(`/documents/doc/${id}`, { method: 'DELETE' });
 }
+
+// Processing
+export function startProcessing(projectId) {
+  return request(`/projects/${projectId}/process`, { method: 'POST' });
+}
+
+export function getProcessingStatus(projectId) {
+  return request(`/projects/${projectId}/process/status`);
+}
+
+// Chunks
+export function getChunks(projectId, { category, status } = {}) {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  if (status) params.set('status', status);
+  const qs = params.toString();
+  return request(`/projects/${projectId}/chunks${qs ? `?${qs}` : ''}`);
+}
+
+export function getChunkCategories(projectId) {
+  return request(`/projects/${projectId}/chunks/categories`);
+}
