@@ -1,0 +1,38 @@
+databases:
+  - name: refyne-db
+    plan: free
+    databaseName: refyne
+    user: refyne_user
+
+services:
+  - type: web
+    name: refyne
+    runtime: node
+    plan: free
+    buildCommand: npm install && cd server && npm install && cd ../client && npm install && npm run build
+    startCommand: cd server && node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: refyne-db
+          property: connectionString
+      - key: APP_URL
+        value: https://refyne.onrender.com
+      - key: API_URL
+        value: https://refyne.onrender.com
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRO_PRICE_ID
+        sync: false
