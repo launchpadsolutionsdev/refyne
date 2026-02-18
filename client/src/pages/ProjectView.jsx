@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { getProject, getDocuments, uploadDocuments, updateProject } from '../api/client';
 import FileUploadZone from '../components/FileUploadZone';
 import DocumentList from '../components/DocumentList';
+import ProcessingProgress from '../components/ProcessingProgress';
+import ChunkListView from '../components/ChunkListView';
 
 export default function ProjectView() {
   const { id } = useParams();
@@ -15,6 +17,7 @@ export default function ProjectView() {
   const [nameValue, setNameValue] = useState('');
   const [descValue, setDescValue] = useState('');
   const [editingDesc, setEditingDesc] = useState(false);
+  const [chunkRefreshKey, setChunkRefreshKey] = useState(0);
 
   const loadData = useCallback(async () => {
     try {
@@ -34,10 +37,10 @@ export default function ProjectView() {
     loadData();
   }, [loadData]);
 
-  // Poll for status updates on extracting documents
+  // Poll for status updates on extracting/processing documents
   useEffect(() => {
     const hasInProgress = documents.some(
-      (d) => d.status === 'uploaded' || d.status === 'extracting'
+      (d) => d.status === 'uploaded' || d.status === 'extracting' || d.status === 'processing'
     );
     if (!hasInProgress) return;
 
@@ -68,6 +71,12 @@ export default function ProjectView() {
 
   function handleDocumentDeleted(docId) {
     setDocuments((prev) => prev.filter((d) => d.id !== docId));
+  }
+
+  function handleProcessingComplete() {
+    // Refresh documents and chunks
+    loadData();
+    setChunkRefreshKey((k) => k + 1);
   }
 
   async function handleSaveName() {
@@ -114,8 +123,10 @@ export default function ProjectView() {
     );
   }
 
-  const extractedCount = documents.filter((d) => d.status === 'extracted' || d.status === 'processed').length;
+  const extractedCount = documents.filter((d) => d.status === 'extracted').length;
+  const processedCount = documents.filter((d) => d.status === 'processed').length;
   const errorCount = documents.filter((d) => d.status === 'error').length;
+  const hasExtractedDocs = extractedCount > 0;
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -212,19 +223,36 @@ export default function ProjectView() {
         <div className="flex items-center space-x-6 mb-6 text-sm text-gray-500">
           <span>{documents.length} document{documents.length !== 1 ? 's' : ''}</span>
           <span>{extractedCount} extracted</span>
+          {processedCount > 0 && <span className="text-emerald-600">{processedCount} processed</span>}
           {errorCount > 0 && <span className="text-red-500">{errorCount} failed</span>}
         </div>
       )}
 
       {/* Upload zone */}
-      <div className="mb-8">
+      <div className="mb-6">
         <FileUploadZone onUpload={handleUpload} uploading={uploading} />
       </div>
 
+      {/* AI Processing section */}
+      {documents.length > 0 && (
+        <div className="mb-8">
+          <ProcessingProgress
+            projectId={id}
+            hasExtractedDocs={hasExtractedDocs}
+            onProcessingComplete={handleProcessingComplete}
+          />
+        </div>
+      )}
+
       {/* Documents section */}
-      <div>
+      <div className="mb-8">
         <h2 className="text-base font-semibold text-gray-900 mb-4">Documents</h2>
         <DocumentList documents={documents} onDocumentDeleted={handleDocumentDeleted} />
+      </div>
+
+      {/* Chunks / Knowledge Base section */}
+      <div>
+        <ChunkListView projectId={id} refreshKey={chunkRefreshKey} />
       </div>
     </div>
   );

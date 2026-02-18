@@ -6,6 +6,7 @@ const path = require('path');
 const errorHandler = require('./middleware/errorHandler');
 const projectRoutes = require('./routes/projects');
 const documentRoutes = require('./routes/documents');
+const processingRoutes = require('./routes/processing');
 
 const initDatabase = require('./config/init-db');
 
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use('/api/projects', projectRoutes);
 app.use('/api/projects', documentRoutes);
 app.use('/api/documents', require('./routes/documents'));
+app.use('/api/projects', processingRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
