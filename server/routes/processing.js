@@ -64,8 +64,8 @@ router.get('/:projectId/process/status', (req, res) => {
 // GET /api/projects/:projectId/chunks - List chunks for project
 router.get('/:projectId/chunks', async (req, res, next) => {
   try {
-    const { category, status } = req.query;
-    const chunks = await Chunk.findAllByProject(req.params.projectId, { category, status });
+    const { category, status, search, tag } = req.query;
+    const chunks = await Chunk.findAllByProject(req.params.projectId, { category, status, search, tag });
     res.json(chunks);
   } catch (err) {
     next(err);

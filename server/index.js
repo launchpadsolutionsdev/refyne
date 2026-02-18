@@ -7,6 +7,8 @@ const errorHandler = require('./middleware/errorHandler');
 const projectRoutes = require('./routes/projects');
 const documentRoutes = require('./routes/documents');
 const processingRoutes = require('./routes/processing');
+const chunkRoutes = require('./routes/chunks');
+const tagRoutes = require('./routes/tags');
 
 const initDatabase = require('./config/init-db');
 
@@ -25,6 +27,9 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/projects', documentRoutes);
 app.use('/api/documents', require('./routes/documents'));
 app.use('/api/projects', processingRoutes);
+app.use('/api/projects', chunkRoutes); // for /api/projects/:id/chunks/stats and /api/projects/:id/tags
+app.use('/api/chunks', chunkRoutes);   // for /api/chunks/:id operations
+app.use('/api/projects', tagRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
