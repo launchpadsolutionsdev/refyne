@@ -10,6 +10,7 @@ const Project = {
       LEFT JOIN documents d ON d.project_id = p.id
       LEFT JOIN chunks c ON c.project_id = p.id
       WHERE p.user_id = $1
+      GROUP BY p.id
       ORDER BY p.created_at DESC`,
       [userId]
     );
