@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import ProjectView from './pages/ProjectView';
+import KnowledgeBase from './pages/KnowledgeBase';
 
 function NavBar() {
   const location = useLocation();
@@ -36,6 +37,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/project/:id" element={<ProjectView />} />
+          <Route path="/project/:id/knowledge-base" element={<KnowledgeBase />} />
         </Routes>
       </div>
     </BrowserRouter>

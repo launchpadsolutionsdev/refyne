@@ -82,14 +82,53 @@ export function getProcessingStatus(projectId) {
 }
 
 // Chunks
-export function getChunks(projectId, { category, status } = {}) {
+export function getChunks(projectId, { category, status, search, tag } = {}) {
   const params = new URLSearchParams();
   if (category) params.set('category', category);
   if (status) params.set('status', status);
+  if (search) params.set('search', search);
+  if (tag) params.set('tag', tag);
   const qs = params.toString();
   return request(`/projects/${projectId}/chunks${qs ? `?${qs}` : ''}`);
 }
 
 export function getChunkCategories(projectId) {
   return request(`/projects/${projectId}/chunks/categories`);
+}
+
+export function getChunkStats(projectId) {
+  return request(`/projects/${projectId}/chunks/stats`);
+}
+
+export function updateChunk(id, data) {
+  return request(`/chunks/${id}`, { method: 'PATCH', body: data });
+}
+
+export function deleteChunk(id) {
+  return request(`/chunks/${id}`, { method: 'DELETE' });
+}
+
+export function splitChunk(id, position) {
+  return request(`/chunks/${id}/split`, { method: 'POST', body: { position } });
+}
+
+export function mergeChunks(chunkIds) {
+  return request('/chunks/merge', { method: 'POST', body: { chunkIds } });
+}
+
+export function bulkUpdateChunks(data) {
+  return request('/chunks/bulk', { method: 'PATCH', body: data });
+}
+
+export function addTagToChunk(chunkId, name) {
+  return request(`/chunks/${chunkId}/tags`, { method: 'POST', body: { name } });
+}
+
+export function removeTagFromChunk(chunkId, tagId) {
+  return request(`/chunks/${chunkId}/tags/${tagId}`, { method: 'DELETE' });
+}
+
+// Tags
+export function getTags(projectId) {
+  return request(`/projects/${projectId}/tags`);
 }

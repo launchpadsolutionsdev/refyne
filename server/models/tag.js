@@ -2,14 +2,12 @@ const db = require('../config/database');
 
 const Tag = {
   async findOrCreate(projectId, name) {
-    // Try to find existing tag first
     const existing = await db.query(
       'SELECT * FROM tags WHERE project_id = $1 AND name = $2',
       [projectId, name]
     );
     if (existing.rows[0]) return existing.rows[0];
 
-    // Create new tag
     const result = await db.query(
       'INSERT INTO tags (project_id, name) VALUES ($1, $2) RETURNING *',
       [projectId, name]
@@ -35,6 +33,17 @@ const Tag = {
       'INSERT INTO chunk_tags (chunk_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
       [chunkId, tagId]
     );
+  },
+
+  async unlinkFromChunk(chunkId, tagId) {
+    await db.query(
+      'DELETE FROM chunk_tags WHERE chunk_id = $1 AND tag_id = $2',
+      [chunkId, tagId]
+    );
+  },
+
+  async delete(id) {
+    await db.query('DELETE FROM tags WHERE id = $1', [id]);
   },
 };
 

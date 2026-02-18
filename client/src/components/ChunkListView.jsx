@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { getChunks, getChunkCategories } from '../api/client';
 
 function ChunkCard({ chunk }) {
@@ -19,7 +20,6 @@ function ChunkCard({ chunk }) {
         </span>
       </div>
 
-      {/* Tags */}
       {chunk.tags && chunk.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-3">
           {chunk.tags.map((tag) => (
@@ -33,7 +33,6 @@ function ChunkCard({ chunk }) {
         </div>
       )}
 
-      {/* Content preview / expand */}
       <div className="mt-3">
         <button
           onClick={() => setExpanded(!expanded)}
@@ -91,7 +90,7 @@ export default function ChunkListView({ projectId, refreshKey }) {
   }
 
   if (chunks.length === 0) {
-    return null; // Don't show anything if no chunks yet
+    return null;
   }
 
   // Group chunks by category
@@ -111,6 +110,15 @@ export default function ChunkListView({ projectId, refreshKey }) {
             {chunks.length} chunk{chunks.length !== 1 ? 's' : ''}
           </span>
         </h2>
+        <Link
+          to={`/project/${projectId}/knowledge-base`}
+          className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+        >
+          <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Open Editor
+        </Link>
       </div>
 
       {/* Category filter pills */}
