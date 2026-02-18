@@ -78,29 +78,32 @@ const schema = `
 `;
 
 async function initDatabase() {
-  try {
-    console.log('Initializing database schema...');
-    await pool.query(schema);
-    console.log('Database schema initialized successfully.');
+  console.log('Initializing database schema...');
+  await pool.query(schema);
+  console.log('Database schema initialized successfully.');
 
-    // Create a default user for Phase 1 (no auth yet)
-    const existingUser = await pool.query(
-      "SELECT id FROM users WHERE email = 'dev@refyne.local'"
+  // Create a default user for Phase 1 (no auth yet)
+  const existingUser = await pool.query(
+    "SELECT id FROM users WHERE email = 'dev@refyne.local'"
+  );
+  if (existingUser.rows.length === 0) {
+    await pool.query(
+      "INSERT INTO users (email, name) VALUES ('dev@refyne.local', 'Dev User')"
     );
-    if (existingUser.rows.length === 0) {
-      await pool.query(
-        "INSERT INTO users (email, name) VALUES ('dev@refyne.local', 'Dev User')"
-      );
-      console.log('Default dev user created.');
-    } else {
-      console.log('Default dev user already exists.');
-    }
-
-    process.exit(0);
-  } catch (err) {
-    console.error('Failed to initialize database:', err);
-    process.exit(1);
+    console.log('Default dev user created.');
+  } else {
+    console.log('Default dev user already exists.');
   }
 }
 
-initDatabase();
+module.exports = initDatabase;
+
+// Run directly if called as a script (npm run db:init)
+if (require.main === module) {
+  initDatabase()
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error('Failed to initialize database:', err);
+      process.exit(1);
+    });
+}
